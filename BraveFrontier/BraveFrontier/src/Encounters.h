@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+#include "Player.h"
+
 enum class EncounterType
 {
     Circle = 0, // combat : curseur sur un cercle, ESPACE dans les zones
@@ -24,3 +26,5 @@ struct Encounter
 };
 
 std::vector<Encounter> CreateAdventure();
+
+void ResolveNpcEncounter(Encounter& encounter, const Player& player);

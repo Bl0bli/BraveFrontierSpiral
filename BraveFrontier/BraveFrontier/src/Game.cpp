@@ -136,7 +136,7 @@ void Game::Update(float dt)
 
     if (_enemyFleeing)
     {
-        _enemy.position.x += Config::EnemyFleeSpeed * dt;
+        _enemy.position.x += _enemyExitSpeed * dt;
     }
 
     _hero.Update(dt);
@@ -193,7 +193,7 @@ void Game::HandleDebugKeys()
     else if (IsKeyPressed(KEY_F4)) debug = { .type = EncounterType::Boss,   .name = "Debug Boss",   .character = "troll",  .difficulty = 3 };
     else if (IsKeyPressed(KEY_F5))
     {
-        debug = { .type = EncounterType::Npc, .name = "Type Louche", .character = "orc", .difficulty = 1 };
+        debug = { .type = EncounterType::Npc, .name = "Type Louche", .character = "merchant", .difficulty = 1 };
         debug.heal = 4;
         debug.zelCostPercent = 30;
         debug.dialogue = { "Pssst... par ici.", "4 PV contre 30% de ta bourse.", "Marche conclu, hehe..." };
@@ -230,8 +230,7 @@ void Game::HandleCombatEvent(CombatEvent event)
         _enemy.PlayOnce("hurt", "idle");
         break;
     case CombatEvent::EnemyFlee:
-        _enemy.faceLeft = false;
-        _enemy.Play("run");
+        StartEnemyExit(Config::EnemyFleeSpeed);
         break;
     }
 }
@@ -259,12 +258,12 @@ void Game::FinishEncounter(bool won)
         if (_currentEncounter.type == EncounterType::Mash)
         {
             HandleCombatEvent(CombatEvent::EnemyFlee);
-            _enemyFleeing = true;
             _resultText = TextFormat("%s s'est enfui...", _currentEncounter.name.c_str());
             _resultColor = LIGHTGRAY;
         }
         else
         {
+            StartEnemyExit(-Config::EnemyFleeSpeed);
             _resultText = TextFormat("Vous avez perdu contre %s !", _currentEncounter.name.c_str());
             _resultColor = ORANGE;
         }
@@ -277,7 +276,13 @@ void Game::UpdateResult(float dt)
 {
     if (_stateTime < Config::ResultDuration) return;
     if (_lastEncounterWon && !_enemy.IsDeathFinished()) return;
-    if (_enemyFleeing && _enemy.position.x < Config::ScreenWidth + 200.0f) return;
+    if (_enemyFleeing)
+    {
+        const bool gone = _enemyExitSpeed > 0.0f
+            ? _enemy.position.x > Config::ScreenWidth + 200.0f
+            : _enemy.position.x < -200.0f;
+        if (!gone) return;
+    }
 
     if (_isDebugEncounter)
     {
@@ -327,16 +332,27 @@ void Game::PrepareNextEnemy()
 {
     if (_encounterIndex >= (int)_adventure.size()) return;
     
-    const Encounter& encounter = _adventure[_encounterIndex];
+    Encounter& encounter = _adventure[_encounterIndex];
+
+    if (encounter.type == EncounterType::Npc) ResolveNpcEncounter(encounter, _player);
 
     _enemy.Setup(GetCharacterDef(encounter.character), _assets);
     _enemy.faceLeft = true;
     _enemy.Play("run");
     _enemyFleeing = false;
+    _enemyExitSpeed = 0.0f;
     
     _nextEncounterX = _scroll + Config::EnemyX + Config::EncounterSpacing;
     
     _enemy.position = { _nextEncounterX - _scroll, Config::GroundY };
+}
+
+void Game::StartEnemyExit(float speed)
+{
+    _enemyFleeing = true;
+    _enemyExitSpeed = speed;
+    _enemy.faceLeft = speed < 0.0f;
+    _enemy.Play("run");
 }
 
 void Game::StartEncounter(const Encounter& encounter, bool isDebug)
@@ -344,6 +360,7 @@ void Game::StartEncounter(const Encounter& encounter, bool isDebug)
     _currentEncounter = encounter;
     _isDebugEncounter = isDebug;
     _enemyFleeing = false;
+    _enemyExitSpeed = 0.0f;
 
     _enemy.Play("idle");
     _hero.Play("idle");

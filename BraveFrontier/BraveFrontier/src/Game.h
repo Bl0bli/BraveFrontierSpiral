@@ -45,6 +45,7 @@ private:
 
     void ResetRun();
     void PrepareNextEnemy();
+    void StartEnemyExit(float speed);
     void StartEncounter(const Encounter& encounter, bool isDebug);
     void UpdateEncounter(float dt);
 
@@ -100,6 +101,7 @@ private:
     float _shakeTimer = 0.0f;
     
     bool _enemyFleeing = false;
+    float _enemyExitSpeed = 0.0f;
     
     int _dialoguePage = 0;
     float _pageTime = 0.0f; // temps passe sur la page courante (effet machine a ecrire)

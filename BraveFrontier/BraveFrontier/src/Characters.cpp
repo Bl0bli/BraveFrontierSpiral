@@ -66,6 +66,17 @@ namespace
                 { .name = "death", .file = "assets/sprites/troll/death.png", .frameCount = 8, .fps = 10.0f, .loop = false },
             },
         };
+        
+        characters["merchant"] = CharacterDef{
+            .id = "merchant",
+            .scale = 3.0f,
+            .pivot = { 14.0f, 40.0f },
+            .facesRight = true,
+            .animations = {
+                { .name = "idle", .file = "assets/sprites/merchant/idle.png", .frameCount = 4, .fps = 5.0f },
+                { .name = "run",  .file = "assets/sprites/merchant/run.png",  .frameCount = 4, .fps = 10.0f },
+            },
+        };
 
         return characters;
     }
