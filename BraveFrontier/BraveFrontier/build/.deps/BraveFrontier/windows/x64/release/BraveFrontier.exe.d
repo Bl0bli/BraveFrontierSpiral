@@ -1,0 +1,40 @@
+{
+    files = {
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Animator.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Assets.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Background.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Character.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Characters.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Effects.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Encounters.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Game.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\main.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\minigames\BossBattle.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\minigames\CircleGame.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\minigames\MashGame.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\minigames\MiniGame.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\minigames\QteGame.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\minigames\TestGame.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Player.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Save.cpp.obj]],
+        [[build\.objs\BraveFrontier\windows\x64\release\src\Ui.cpp.obj]]
+    },
+    values = {
+        [[C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.44.35207\bin\HostX64\x64\link.exe]],
+        {
+            "-nologo",
+            "-dynamicbase",
+            "-nxcompat",
+            "-machine:x64",
+            [[-libpath:C:\Users\smart\AppData\Local\.xmake\packages\r\raylib\6.0\97b5a0b2551e4f1cb1bd78f2b122c203\lib]],
+            "/opt:ref",
+            "/opt:icf",
+            "raylib.lib",
+            "opengl32.lib",
+            "gdi32.lib",
+            "user32.lib",
+            "winmm.lib",
+            "shell32.lib"
+        }
+    }
+}
