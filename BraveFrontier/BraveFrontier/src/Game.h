@@ -56,7 +56,8 @@ private:
     void GoToNextEncounter();
     void UpdateEndScreen();
     
-    void UpdateDialogue();
+    void UpdateDialogue(float dt);
+    void FinishDialogue();
     
     void PlayMusic(Music& music);
     
@@ -101,6 +102,7 @@ private:
     bool _enemyFleeing = false;
     
     int _dialoguePage = 0;
+    float _pageTime = 0.0f; // temps passe sur la page courante (effet machine a ecrire)
     
     Music* _currentMusic = nullptr;
     

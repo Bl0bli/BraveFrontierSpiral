@@ -18,6 +18,7 @@ struct Encounter
     std::string character = "goblin";
     int difficulty = 1;
     int zelReward = 0;
+    int zelCostPercent = 0;            // PNJ : part de la bourse retiree, en % (prix paye ou vol)
     int heal = 0;                      // PNJ : points de vie rendus
     std::vector<std::string> dialogue; // PNJ : une chaîne par page de dialogue
 };

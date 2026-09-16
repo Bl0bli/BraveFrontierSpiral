@@ -1,6 +1,7 @@
 
 #include "Game.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "Characters.h"
@@ -36,6 +37,9 @@ namespace
 
     const std::string MainFontFile = "assets/fonts/Press_Start_2P/PressStart2P-Regular.ttf";
     const int MainFontSize = 32;
+
+    const float DialogueSpeed = 34.0f;
+    const Rectangle DialogueBox = { 70.0f, 584.0f, Config::ScreenWidth - 140.0f, 124.0f };
 
     const char* StateName(GameState state)
     {
@@ -119,6 +123,7 @@ void Game::Update(float dt)
     case GameState::Title: UpdateTitle(); break;
     case GameState::Walking: UpdateWalking(dt); break;
     case GameState::Encounter: UpdateEncounter(dt); break;
+    case GameState::Dialogue: UpdateDialogue(dt); break;
     case GameState::Result: UpdateResult(dt); break;
     case GameState::GameOver:
     case GameState::Victory: UpdateEndScreen(); break;
@@ -186,6 +191,13 @@ void Game::HandleDebugKeys()
     else if (IsKeyPressed(KEY_F2)) debug = { .type = EncounterType::Qte,    .name = "Debug QTE",    .character = "orc",    .difficulty = 2 };
     else if (IsKeyPressed(KEY_F3)) debug = { .type = EncounterType::Mash,   .name = "Debug Mash",   .character = "troll",  .difficulty = 2 };
     else if (IsKeyPressed(KEY_F4)) debug = { .type = EncounterType::Boss,   .name = "Debug Boss",   .character = "troll",  .difficulty = 3 };
+    else if (IsKeyPressed(KEY_F5))
+    {
+        debug = { .type = EncounterType::Npc, .name = "Type Louche", .character = "orc", .difficulty = 1 };
+        debug.heal = 4;
+        debug.zelCostPercent = 30;
+        debug.dialogue = { "Pssst... par ici.", "4 PV contre 30% de ta bourse.", "Marche conclu, hehe..." };
+    }
     else return;
 
     _enemy.Setup(GetCharacterDef(debug.character), _assets);
@@ -335,12 +347,109 @@ void Game::StartEncounter(const Encounter& encounter, bool isDebug)
 
     _enemy.Play("idle");
     _hero.Play("idle");
+    _encounterEndTimer = 0.0f;
+
+    if (encounter.type == EncounterType::Npc)
+    {
+        _miniGame.reset();
+        _dialoguePage = 0;
+        _pageTime = 0.0f;
+        ChangeState(GameState::Dialogue);
+        return;
+    }
 
     _miniGame = CreateMiniGame(encounter.type);
     _miniGame->Start(_player, encounter.difficulty);
     _encounterEndTimer = 0.0f;
 
     ChangeState(GameState::Encounter);
+}
+
+void Game::UpdateDialogue(float dt)
+{
+    const std::vector<std::string>& pages = _currentEncounter.dialogue;
+    if (_dialoguePage >= (int)pages.size())
+    {
+        FinishDialogue();
+        return;
+    }
+
+    _pageTime += dt;
+
+    const int total = (int)pages[_dialoguePage].size();
+    const float fullPageTime = total / DialogueSpeed;
+
+    if (!IsKeyPressed(KEY_SPACE)) return;
+
+    if (_pageTime < fullPageTime)
+    {
+        _pageTime = fullPageTime;
+        return;
+    }
+
+    ++_dialoguePage;
+    _pageTime = 0.0f;
+    if (_dialoguePage >= (int)pages.size()) FinishDialogue();
+}
+
+void Game::FinishDialogue()
+{
+    const int cost = _player.zel * _currentEncounter.zelCostPercent / 100;
+
+    if (_currentEncounter.heal > 0) _player.Heal(_currentEncounter.heal);
+    if (cost > 0) _player.zel = std::max(0, _player.zel - cost);
+
+    _lastEncounterWon = false;
+    _enemyFleeing = false;
+
+    if (_currentEncounter.heal > 0 && cost > 0)
+    {
+        _resultText = TextFormat("+%i PV  /  -%i Zel", _currentEncounter.heal, cost);
+        _resultColor = SKYBLUE;
+    }
+    else if (_currentEncounter.heal > 0)
+    {
+        _resultText = TextFormat("%s vous soigne : +%i PV", _currentEncounter.name.c_str(), _currentEncounter.heal);
+        _resultColor = GREEN;
+    }
+    else if (cost > 0)
+    {
+        _resultText = TextFormat("%s vous vole %i Zel !", _currentEncounter.name.c_str(), cost);
+        _resultColor = ORANGE;
+    }
+    else
+    {
+        _resultText = TextFormat("%s repart les mains vides...", _currentEncounter.name.c_str());
+        _resultColor = LIGHTGRAY;
+    }
+
+    ChangeState(GameState::Result);
+}
+
+void Game::DrawDialogue() const
+{
+    const std::vector<std::string>& pages = _currentEncounter.dialogue;
+    if (_dialoguePage >= (int)pages.size()) return;
+
+    DrawRectangleRounded(DialogueBox, 0.12f, 8, Fade(BLACK, 0.85f));
+    DrawRectangleRoundedLinesEx(DialogueBox, 0.12f, 8, 3.0f, RAYWHITE);
+
+    Ui::DrawTextAt(_currentEncounter.name.c_str(), { DialogueBox.x + 30.0f, DialogueBox.y + 14.0f }, 20.0f, GOLD);
+
+    const std::string& page = pages[_dialoguePage];
+    const int shown = std::min((int)(_pageTime * DialogueSpeed), (int)page.size());
+    const std::string visible = page.substr(0, shown);
+    Ui::DrawTextAt(visible.c_str(), { DialogueBox.x + 30.0f, DialogueBox.y + 52.0f }, 20.0f, RAYWHITE);
+
+    if (shown >= (int)page.size())
+    {
+        const float pulse = 0.5f + 0.5f * std::sin((float)GetTime() * 5.0f);
+        Ui::DrawTextAt("[ESPACE]", { DialogueBox.x + DialogueBox.width - 170.0f, DialogueBox.y + 90.0f },
+                       18.0f, Fade(WHITE, pulse));
+    }
+
+    Ui::DrawTextCentered(TextFormat("%i / %i", _dialoguePage + 1, (int)pages.size()),
+                         DialogueBox.x + DialogueBox.width - 60.0f, DialogueBox.y + 16.0f, 16.0f, LIGHTGRAY);
 }
 
 void Game::Draw() const
@@ -368,6 +477,10 @@ void Game::Draw() const
             DrawRectangle(0, 0, Config::ScreenWidth, Config::ScreenHeight, Fade(BLACK, 0.45f));
             if (_miniGame != nullptr) _miniGame->Draw();
             DrawHud();
+            break;
+        case GameState::Dialogue:
+            DrawHud();
+            DrawDialogue();
             break;
         case GameState::Result: DrawResult(); break;
         case GameState::Victory: DrawEndScreen(); break;
@@ -435,6 +548,8 @@ void Game::DrawHud() const
 void Game::DrawResult() const
 {
     DrawHud();
+
+    DrawRectangle(0, 186, Config::ScreenWidth, 56, Fade(BLACK, 0.6f));
     Ui::DrawTextCentered(_resultText.c_str(), Config::ScreenWidth / 2.0f, 200.0f, 30.0f, _resultColor);
 }
 
