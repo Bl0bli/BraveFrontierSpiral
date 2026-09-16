@@ -1,0 +1,14 @@
+# Xmake cache
+.xmake/
+
+# MacOS Cache
+.DS_Store
+
+
+
+# Sauvegarde locale du joueur
+save.txt
+
+# IDE / solutions generees
+.idea/
+vsxmake2022/
