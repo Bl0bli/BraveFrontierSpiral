@@ -8,6 +8,7 @@
 #include "Save.h"
 #include "Ui.h"
 #include "minigames/CircleGame.h"
+#include "minigames/QteGame.h"
 #include "minigames/TestGame.h"
 
 namespace
@@ -19,6 +20,7 @@ namespace
         case EncounterType::Circle:
             return std::make_unique<CircleGame>();
         case EncounterType::Qte:
+            return std::make_unique<QteGame>();
         case EncounterType::Mash:
         case EncounterType::Boss:
         default:
